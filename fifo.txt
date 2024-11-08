@@ -1,0 +1,98 @@
+VHDL Program:
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+entity main is
+ Port ( d : in STD_LOGIC_VECTOR (3 downto 0);
+ enq,deq,rst,clk : in STD_LOGIC;
+ q : out STD_LOGIC_VECTOR (3 downto 0):="0000";
+ full,empty : out STD_LOGIC);
+end main;
+architecture Behavioral of main is
+type memory_type is array (0 to 3) of std_logic_vector(3 downto 0); 
+signal memory : memory_type :=(others => (others => '0')); 
+begin
+process(clk,rst)
+variable front,rear: integer range 0 to 4 :=0;
+begin
+ if rst='1' then 
+front:=0; rear:=0;q<="0000";
+ elsif clk'event and clk='1' then
+ if enq='1' then
+ memory(rear) <= d;
+ rear:=rear+1;
+elsif deq='1' then
+q<= memory(front);
+front:=front+1;
+end if;
+ if front=rear then
+ empty<='1';
+full<='0';
+ elsif front /=4 and rear=4 then
+ full<='1';
+empty<='0';
+ else 
+ full<='0';
+ empty<='0';
+ end if;
+ end if;
+end process;
+end Behavioral;
+
+
+
+
+
+VHDL Testbench:
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.std_logic_unsigned.all;
+USE ieee.numeric_std.ALL;
+ENTITY te_vhd IS
+END te_vhd;
+ARCHITECTURE behavior OF te_vhd IS 
+COMPONENT main
+PORT(
+d : IN std_logic_vector(3 downto 0);
+enq : IN std_logic;
+deq,clk : IN std_logic;
+rst : IN std_logic; 
+q : OUT std_logic_vector(3 downto 0);
+full : OUT std_logic;
+empty : OUT std_logic
+);
+END COMPONENT;
+SIGNAL enq : std_logic := '0';
+SIGNAL deq,clk : std_logic := '0';
+SIGNAL rst : std_logic := '0';
+SIGNAL d : std_logic_vector(3 downto 0) := (others=>'0');
+SIGNAL q : std_logic_vector(3 downto 0);
+SIGNAL full : std_logic;
+SIGNAL empty : std_logic;
+BEGIN
+uut: main PORT MAP(d => d,enq => enq,deq => deq, clk=>clk, rst=>rst,
+q => q,full => full, empty => empty );
+process
+begin
+wait for 10 ns;
+clk<=not clk;
+end process;
+PROCESS
+BEGIN
+wait for 20 ns;
+d<="1000";
+enq<='1'; 
+wait for 20 ns;
+d<="1001";
+wait for 20 ns;
+d<="1110"; 
+wait for 20 ns;
+d<="1010"; 
+wait for 30 ns;
+enq<='0';
+wait for 30 ns;
+deq<='1';
+wait;
+END PROCESS;
+END;
